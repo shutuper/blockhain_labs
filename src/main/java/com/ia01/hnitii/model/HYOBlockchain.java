@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
 import org.apache.commons.collections4.CollectionUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -25,7 +26,7 @@ public final class HYOBlockchain {
 	static String HYO_MONTH_OF_BIRTH = "07";
 
 	public HYOBlockchain() {
-		newBlock(18072003, "hnitii_f033b131e00564ab7f84abdf16f0df73faa06f809a54fffbadad80ddf");
+		newBlock(18072003, "hnitii_f033b131e00564ab7f84abdf16f0df73faa06f809a54fffbadad80d07");
 	}
 
 	public HYOBlock lastBlock() {
@@ -53,18 +54,24 @@ public final class HYOBlockchain {
 
 		this.hyoChain.add(newHyoBlock);
 
+		newHyoBlock.setHash(hash(newHyoBlock));
+
 		return newHyoBlock;
 	}
 
 	public static String hash(HYOBlock hyoBlock) {
-		String hashingInput = String.valueOf(hyoBlock.getIndex())
-				.concat(String.valueOf(hyoBlock.getTimestamp()))
-				.concat(String.valueOf(hyoBlock.getProof()))
-				.concat(hyoBlock.getPreviousHash());
-
-		return Hashing.sha256()
-				.hashString(hashingInput, StandardCharsets.UTF_8)
+		String guessHash = Hashing.sha256()
+				.hashString(getHashingInput(hyoBlock), StandardCharsets.UTF_8)
 				.toString();
+
+		while (isHashNotValid(guessHash)) {
+			hyoBlock.setProof(hyoBlock.getProof() + 1);
+			guessHash = Hashing.sha256()
+					.hashString(getHashingInput(hyoBlock), StandardCharsets.UTF_8)
+					.toString();
+		}
+
+		return guessHash;
 	}
 
 	public int proofOfWork(int lastProofOfWork) {
@@ -77,9 +84,28 @@ public final class HYOBlockchain {
 
 	private boolean isNotProofValid(int lastProof, int proof) {
 		String guessString = Integer.toString(lastProof) + proof;
-		return !Hashing.sha256()
+		String guessHash = Hashing.sha256()
 				.hashString(guessString, StandardCharsets.UTF_8)
-				.toString()
-				.endsWith(HYO_MONTH_OF_BIRTH);
+				.toString();
+
+		boolean guessed = guessHash.endsWith(HYO_MONTH_OF_BIRTH);
+
+		if (guessed) {
+			System.out.println("Guessed hash: " + guessHash + "\n");
+		}
+
+		return !guessed;
+	}
+
+	@NotNull
+	private static String getHashingInput(HYOBlock hyoBlock) {
+		return String.valueOf(hyoBlock.getIndex())
+				.concat(String.valueOf(hyoBlock.getTimestamp()))
+				.concat(String.valueOf(hyoBlock.getProof()))
+				.concat(hyoBlock.getPreviousHash());
+	}
+
+	private static boolean isHashNotValid(String guessHash) {
+		return !guessHash.endsWith(HYO_MONTH_OF_BIRTH);
 	}
 }

@@ -21,6 +21,8 @@ public class HYOBlock {
 
 	String previousHash;
 
+	String hash;
+
 	long timestamp;
 
 	int index;

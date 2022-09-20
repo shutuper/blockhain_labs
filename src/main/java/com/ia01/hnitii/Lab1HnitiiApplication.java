@@ -19,16 +19,17 @@ public class Lab1HnitiiApplication {
 	@Bean
 	public CommandLineRunner run(HYOBlockchain blockchain) {
 		return args -> {
+			HYOBlock lastBlock = requireNonNull(blockchain.lastBlock());
 			for (int i = 0; i < 10; i++) {
-				HYOBlock lastBlock = requireNonNull(blockchain.lastBlock());
+				System.out.println("Block N" + (i + 1) + "\n" + lastBlock);
 
 				int proof = blockchain.proofOfWork(lastBlock.getProof());
 				String hash = HYOBlockchain.hash(lastBlock);
 
 				blockchain.newBlock(proof, hash);
+				lastBlock = requireNonNull(blockchain.lastBlock());
 			}
 
-			blockchain.getHyoChain().forEach(System.out::println);
 		};
 	}
 
