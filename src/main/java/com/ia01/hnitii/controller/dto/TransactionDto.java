@@ -10,6 +10,8 @@ import lombok.experimental.FieldDefaults;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 
+import java.time.Instant;
+
 import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
 import static lombok.AccessLevel.PRIVATE;
 
@@ -30,6 +32,6 @@ public class TransactionDto {
 	int amount;
 
 	@JsonProperty(access = READ_ONLY)
-	int index;
+	Instant timestamp;
 
 }
