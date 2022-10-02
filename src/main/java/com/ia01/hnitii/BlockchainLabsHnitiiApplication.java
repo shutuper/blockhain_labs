@@ -21,6 +21,9 @@ public class BlockchainLabsHnitiiApplication {
 //				System.out.println("Block N" + (i + 1) + "\n" + lastBlock);
 //
 //				int proof = blockchain.proofOfWork(lastBlock.getProof());
+//
+//				blockchain.newTransaction(GENESIS_ADDRESS, THIS_NODE, HYO_DAY_OF_BIRTH);
+//
 //				String hash = Blockchain.hash(lastBlock);
 //
 //				blockchain.newBlock(proof, hash);

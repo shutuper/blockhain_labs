@@ -1,7 +1,8 @@
 package com.ia01.hnitii.controller;
 
-import com.ia01.hnitii.controller.dto.BlockDto;
 import com.ia01.hnitii.common.dto.PageResponse;
+import com.ia01.hnitii.controller.dto.BalanceDto;
+import com.ia01.hnitii.controller.dto.BlockDto;
 import com.ia01.hnitii.controller.dto.TransactionDto;
 import com.ia01.hnitii.service.BlockchainService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +36,18 @@ public class BlockchainController {
 	public ResponseEntity<BlockDto> mine() {
 		BlockDto block = blockchainService.mine();
 		return ResponseEntity.ok(block);
+	}
+
+	@GetMapping("/balances")
+	public ResponseEntity<List<BalanceDto>> getBalances() {
+		List<BalanceDto> response = blockchainService.getBalances();
+		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping("/mempool")
+	public ResponseEntity<PageResponse<TransactionDto>> getMempool() {
+		List<TransactionDto> transactions = blockchainService.getMempool();
+		return ResponseEntity.ok(PageResponse.of(transactions, transactions.size()));
 	}
 
 	@PostMapping("/transactions")

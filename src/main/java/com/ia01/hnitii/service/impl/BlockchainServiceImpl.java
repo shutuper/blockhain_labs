@@ -1,5 +1,6 @@
 package com.ia01.hnitii.service.impl;
 
+import com.ia01.hnitii.controller.dto.BalanceDto;
 import com.ia01.hnitii.controller.dto.BlockDto;
 import com.ia01.hnitii.controller.dto.TransactionDto;
 import com.ia01.hnitii.controller.mapper.BlockchainMapper;
@@ -8,12 +9,12 @@ import com.ia01.hnitii.model.Blockchain;
 import com.ia01.hnitii.service.BlockchainService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.ia01.hnitii.model.Blockchain.HYO_DAY_OF_BIRTH;
-import static com.ia01.hnitii.model.Blockchain.THIS_NODE;
+import static com.ia01.hnitii.model.Blockchain.*;
 import static java.util.Objects.requireNonNull;
 import static lombok.AccessLevel.PRIVATE;
 
@@ -40,7 +41,7 @@ public class BlockchainServiceImpl implements BlockchainService {
 
 		int proof = blockchain.proofOfWork(lastBlock.getProof());
 
-		blockchain.newTransaction("0", THIS_NODE, HYO_DAY_OF_BIRTH);
+		blockchain.newTransaction(GENESIS_ADDRESS, THIS_NODE, HYO_DAY_OF_BIRTH);
 
 		String lastHash = Blockchain.hash(lastBlock);
 
@@ -54,6 +55,29 @@ public class BlockchainServiceImpl implements BlockchainService {
 		return blockchain.newTransaction(
 				transaction.getSender(), transaction.getRecipient(), transaction.getAmount()
 		);
+	}
+
+	@Override
+	public List<BalanceDto> getBalances() {
+		return blockchain.getAllBalances()
+				.entrySet()
+				.stream()
+				.map(walletToBalance -> BalanceDto.builder()
+						.wallet(walletToBalance.getKey())
+						.amount(walletToBalance.getValue())
+						.build()
+				)
+				.filter(dto -> ObjectUtils.notEqual(dto.getWallet(), GENESIS_ADDRESS))
+				.toList();
+	}
+
+	@Override
+	public List<TransactionDto> getMempool() {
+		return blockchain.getMempool()
+				.getTransactions()
+				.stream()
+				.map(blockchainMapper::toTransactionDto)
+				.toList();
 	}
 
 }
