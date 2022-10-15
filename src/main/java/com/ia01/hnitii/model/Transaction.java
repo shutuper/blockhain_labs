@@ -5,8 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.time.Instant;
-
 import static lombok.AccessLevel.PRIVATE;
 
 @Data
@@ -21,7 +19,7 @@ public class Transaction {
 
 	int amount;
 
-	Instant timestamp = Instant.now();
+	long timestamp = System.nanoTime();
 
 	public Transaction(String sender, String recipient, int amount) {
 		this.sender = sender;

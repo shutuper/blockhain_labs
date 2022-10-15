@@ -6,27 +6,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import java.util.ArrayList;
+import java.util.List;
 
 import static lombok.AccessLevel.PRIVATE;
+
 
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = PRIVATE)
-public class TransactionDto {
+public class NodeDto {
 
-	@NotBlank
-	String sender;
-
-	@NotBlank
-	String recipient;
-
-	@Min(1)
-	int amount;
-
-	long timestamp;
+	@NotEmpty
+	List<String> nodes = new ArrayList<>();
 
 }

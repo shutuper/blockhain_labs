@@ -1,32 +1,27 @@
 package com.ia01.hnitii.controller.dto;
 
+import com.ia01.hnitii.model.Block;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
+import java.util.ArrayList;
+import java.util.List;
 
 import static lombok.AccessLevel.PRIVATE;
+
 
 @Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = PRIVATE)
-public class TransactionDto {
+public class ChainDto {
 
-	@NotBlank
-	String sender;
+	List<Block> chain = new ArrayList<>();
 
-	@NotBlank
-	String recipient;
-
-	@Min(1)
-	int amount;
-
-	long timestamp;
+	int length = 0;
 
 }

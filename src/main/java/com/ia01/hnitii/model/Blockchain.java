@@ -1,20 +1,30 @@
 package com.ia01.hnitii.model;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.hash.Hashing;
+import com.ia01.hnitii.common.dto.PageResponse;
 import com.ia01.hnitii.common.exception.BusinessException;
+import com.ia01.hnitii.controller.dto.BlockDto;
+import com.ia01.hnitii.controller.mapper.BlockchainMapper;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Stream;
 
 import static lombok.AccessLevel.PRIVATE;
+import static org.apache.commons.lang3.ObjectUtils.notEqual;
 
 @Getter
 @ToString
@@ -22,18 +32,90 @@ import static lombok.AccessLevel.PRIVATE;
 @FieldDefaults(makeFinal = true, level = PRIVATE)
 public final class Blockchain {
 
+	@NonFinal
 	List<Block> chain = Collections.synchronizedList(new ArrayList<>());
+	Set<String> nodes = Collections.synchronizedSet(new HashSet<>());
+
+	BlockchainMapper blockchainMapper;
 	Mempool mempool;
 
-	public final static String HYO_MONTH_OF_BIRTH = "07";
 	public final static String THIS_NODE = "914dc579-9ef6-489a-b59d-b52c9f3c6fd2";
-	public final static int HYO_DAY_OF_BIRTH = 18;
+	public final static String HYO_MONTH_OF_BIRTH = "07";
 	public final static String GENESIS_ADDRESS = "0";
+	public final static int HYO_DAY_OF_BIRTH = 18;
 
-	public Blockchain(Mempool mempool) {
+	public Blockchain(BlockchainMapper blockchainMapper, Mempool mempool) {
+		this.blockchainMapper = blockchainMapper;
 		this.mempool = mempool;
 		newTransaction(GENESIS_ADDRESS, THIS_NODE, HYO_DAY_OF_BIRTH);
 		newBlock(18072003, "hnitii_f033b131e00564ab7f84abdf16f0df73faa06f809a54fffbadad80d07");
+	}
+
+	public void registerNode(String node) {
+		this.nodes.add(node);
+	}
+
+	public void resolveConflicts() {
+		List<Block> newChain = this.chain;
+
+		newChain = consensusAlgorithm(newChain);
+
+		if (newChain != this.chain) {
+			this.chain = newChain;
+		}
+	}
+
+	public static boolean validChain(List<Block> chain) {
+		for (int i = 1; i < chain.size(); i++) {
+			Block lastBlock = chain.get(i - 1);
+			Block currentBlock = chain.get(i);
+
+			if (notEqual(currentBlock.getPreviousHash(), hash(lastBlock))) {
+				System.out.println("Hash don't match");
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private List<Block> consensusAlgorithm(List<Block> newChain) {
+		int maxLen = newChain.size();
+
+		for (String host : this.nodes) {
+			String path = "/api/v1/blockchain/chain";
+			String getURL = host + path;
+
+			Request request = new Request.Builder()
+					.url(getURL)
+					.get()
+					.build();
+
+			try (Response response = new OkHttpClient().newCall(request).execute()) {
+				if (!response.isSuccessful()) {
+					throw new BusinessException("Failed to GET " + getURL);
+				}
+
+				String responseBody = Objects.requireNonNull(response.body()).string();
+				PageResponse<BlockDto> remoteChainResponse = new ObjectMapper().readValue(
+						responseBody, new TypeReference<>() {
+						});
+
+				List<Block> remoteChain = remoteChainResponse.getResult()
+						.stream()
+						.map(blockchainMapper::toBlock)
+						.toList();
+
+				if (remoteChain.size() > maxLen && validChain(remoteChain)) {
+					maxLen = remoteChain.size();
+					newChain = remoteChain;
+				}
+
+			} catch (IOException e) {
+				throw new BusinessException("Failed to GET: " + getURL + ". IOException: " + e.getMessage());
+			}
+		}
+		return newChain;
 	}
 
 	public Block lastBlock() {
@@ -44,7 +126,7 @@ public final class Blockchain {
 	public int newTransaction(String sender, String recipient, int amount) {
 		Transaction transaction = new Transaction(sender, recipient, amount);
 
-		if (ObjectUtils.notEqual(GENESIS_ADDRESS, sender)) {
+		if (notEqual(GENESIS_ADDRESS, sender)) {
 			validateTransaction(transaction);
 		}
 

@@ -1,8 +1,6 @@
 package com.ia01.hnitii.service;
 
-import com.ia01.hnitii.controller.dto.BalanceDto;
-import com.ia01.hnitii.controller.dto.BlockDto;
-import com.ia01.hnitii.controller.dto.TransactionDto;
+import com.ia01.hnitii.controller.dto.*;
 
 import java.util.List;
 
@@ -18,5 +16,11 @@ public interface BlockchainService {
 	List<BalanceDto> getBalances();
 
 	List<TransactionDto> getMempool();
+
+	NodeDto registerNodes(NodeDto nodeDto);
+
+	NodeDto getNodes();
+
+	List<BlockDto> resolveConflicts();
 
 }

@@ -1,9 +1,7 @@
 package com.ia01.hnitii.controller;
 
 import com.ia01.hnitii.common.dto.PageResponse;
-import com.ia01.hnitii.controller.dto.BalanceDto;
-import com.ia01.hnitii.controller.dto.BlockDto;
-import com.ia01.hnitii.controller.dto.TransactionDto;
+import com.ia01.hnitii.controller.dto.*;
 import com.ia01.hnitii.service.BlockchainService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
@@ -55,6 +53,26 @@ public class BlockchainController {
 	                                                TransactionDto transaction) {
 		int index = blockchainService.createTransaction(transaction);
 		return ResponseEntity.ok("New transaction created, index: " + index);
+	}
+
+	@PostMapping("/nodes")
+	public ResponseEntity<NodeDto> registerNodes(@RequestBody @Valid NodeDto nodeDto) {
+		NodeDto response = blockchainService.registerNodes(nodeDto);
+		return ResponseEntity.ok(response);
+	}
+
+	@GetMapping("/nodes")
+	public ResponseEntity<NodeDto> getNodes() {
+		NodeDto response = blockchainService.getNodes();
+		return ResponseEntity.ok(response);
+	}
+
+	@PostMapping("/nodes/resolve")
+	public ResponseEntity<PageResponse<BlockDto>> resolveConflicts() {
+		List<BlockDto> chain = blockchainService.resolveConflicts();
+		return ResponseEntity.ok(
+				PageResponse.of(chain, chain.size())
+		);
 	}
 
 }

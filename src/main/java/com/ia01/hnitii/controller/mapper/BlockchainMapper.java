@@ -13,4 +13,6 @@ public interface BlockchainMapper {
 
 	TransactionDto toTransactionDto(Transaction transaction);
 
+	Block toBlock(BlockDto dto);
+
 }

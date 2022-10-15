@@ -1,8 +1,6 @@
 package com.ia01.hnitii.service.impl;
 
-import com.ia01.hnitii.controller.dto.BalanceDto;
-import com.ia01.hnitii.controller.dto.BlockDto;
-import com.ia01.hnitii.controller.dto.TransactionDto;
+import com.ia01.hnitii.controller.dto.*;
 import com.ia01.hnitii.controller.mapper.BlockchainMapper;
 import com.ia01.hnitii.model.Block;
 import com.ia01.hnitii.model.Blockchain;
@@ -12,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.ia01.hnitii.model.Blockchain.*;
@@ -78,6 +77,33 @@ public class BlockchainServiceImpl implements BlockchainService {
 				.stream()
 				.map(blockchainMapper::toTransactionDto)
 				.toList();
+	}
+
+	@Override
+	public NodeDto registerNodes(NodeDto nodeDto) {
+		nodeDto.getNodes()
+				.forEach(blockchain::registerNode);
+
+		return getAllNodes();
+	}
+
+	@Override
+	public NodeDto getNodes() {
+		return getAllNodes();
+	}
+
+	@Override
+	public List<BlockDto> resolveConflicts() {
+		blockchain.resolveConflicts();
+		return getChain();
+	}
+
+	private NodeDto getAllNodes() {
+		ArrayList<String> allNodes = new ArrayList<>(blockchain.getNodes());
+
+		return NodeDto.builder()
+				.nodes(allNodes)
+				.build();
 	}
 
 }
