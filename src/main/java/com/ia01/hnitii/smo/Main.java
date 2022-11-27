@@ -7,93 +7,67 @@ import static java.lang.Math.*;
 public class Main {
 
 	public static void main(String[] args) {
-		int n = 4, m = 10, lambda = 5;
-		double u = 1D / 0.18, p = lambda / u;
+		int n = 25, m = 2, lambda = 3;
+		double u = 30, p = lambda / u;
 
-		double[] pT = smo_2_b(n, m, p);
-		System.out.printf("smo_2_b(n = %s, m = %s, p = %s) = \npT%s\n", n, m, p, Arrays.toString(pT));
+		double[] pT = smo_4(n, m, p);
+		System.out.printf("smo_4(n = %s, m = %s, p = %s) = \npT%s\n", n, m, p, Arrays.toString(pT));
 
-		printCharacteristics(n, m, lambda, u, pT, 10);
-		printUWhenRejectPLTE(n, m, lambda);
+		printCharacteristics(n, m, lambda, u, pT);
+		printTobs(n, m, lambda);
 	}
 
-	private static double[] smo_2_b(int n, int m, double p) {
-		int len = n + m + 1;
-		double[] pT = new double[len];
-		pT[0] = 1;
+	private static double[] smo_4(int n, int m, double p) {
+		int len = n + 1;
+		double[] pT = new double[len], q = new double[len];
+		q[0] = 1;
 		double s = 1;
 
 		for (int k = 1; k < len; k++) {
-			pT[k] = pT[k - 1] * p / min(k, n);
-			if (k > n) {
-				pT[k] *= pow(1d / n, k - n);
-			}
-			s += pT[k];
+			q[k] = (q[k - 1] * p / min(k, m)) * (n + 1 - k);
+			s += q[k];
 		}
 
-		pT[0] = 1 / s;
+		pT[0] = 1d / s;
 
 		for (int k = 1; k < len; k++) {
-			pT[k] *= pT[0];
+			pT[k] = q[k] * pT[0];
 		}
 
 		return pT;
 	}
 
-	private static void printCharacteristics(int n, int m, int lambda, double u, double[] pT, int maxLen) {
+	private static void printCharacteristics(int n, int m, int lambda, double u, double[] pT) {
 		double p = pT[pT.length - 1];
 		double q = 1 - p;
 
 		double avgBusyN = 0;
-		for (int k = 1; k <= n && k < pT.length; k++) {
+		for (int k = 0; k <= n; k++) {
 			avgBusyN += k * pT[k];
 		}
 
-		double avgQueueLen = 0;
-		for (int k = 1; (n + k < pT.length) && (k <= maxLen); k++) {
-			avgQueueLen += k * pT[n + k];
-		}
-
-		double queueExistence = 0;
-		for (int k = 1; (n + k < pT.length) && (k <= maxLen); k++) {
-			queueExistence += pT[n + k];
-		}
-
-		double P3 = 0;
-		for (int k = 0; (n + k < pT.length) && (k <= maxLen); k++) {
-			P3 += pT[n + k];
-		}
-
-		double P4 = 0;
-		for (int k = n; k < pT.length; k++) {
-			P4 += pT[k];
-		}
 
 		System.out.println("\nОпераційні характеристики СМО:\n");
-		System.out.println("Pвідм = " + p);
-		System.out.println("Середня кількість зайнятих каналів = " + avgBusyN);
-		System.out.println("Середня довжина черги = " + avgQueueLen);
-		System.out.println("Середня кількість повідомлень = " + (avgBusyN + avgQueueLen));
-		System.out.println("Середній час чекання у черзі = " + (avgQueueLen / lambda));
-		System.out.println("Середній час перебування SMS у системі = " + (avgQueueLen / lambda + q / u));
-		System.out.println("Імовірність наявності черги = " + queueExistence);
-		System.out.println("Імовірність зайнятості каналів обслуговування = " + P3);
-		System.out.println("Імовірність чекання SMS у черзі = " + P4);
+		System.out.println("Середнє число зайнятих каналів = " + (1 - pT[0]));
+		System.out.println("Середня кількість не зайнятих каналів = " + (pT[0]));
+		System.out.println("Абсолютна пропускна спроможність = " + avgBusyN * u);
+		System.out.println("Коефіцієнт простою автомобілів = " + avgBusyN / n);
+		System.out.println("Середнє число учнів у системі на обслуговування = " + (n - (1 - pT[0]) / (lambda / u)));
+		System.out.println("Коефіцієнт простою студентів = " + (n - (1 - pT[0]) / (lambda / u)) / n);
 	}
 
-	private static void printUWhenRejectPLTE(int n, int m, int lambda) {
-		for (double t = 2.55; t > 0; t -= 0.01D) {
-			double u = lambda / (1D / t);
-			double[] pT = smo_2_b(n, m * 10, u);
+	private static void printTobs(int n, int m, int lambda) {
+		double step = 0.01D;
+		for (double t = 0.1; t > 0; t += step) {
+			double p = lambda * t;
 
-			double avgQueueLen = 0;
-			for (int k = 1; k <= m; k++) {
-				avgQueueLen += k * pT[n + k];
-			}
+			double[] pT = smo_4(n, m, p);
+			double p0 = pT[0];
+			double n4er = n - ((1 + p) / p) * (1 - p0);
 
-			if (((int) avgQueueLen) <= m + 1) {
-				System.out.println("\nМінімальний час обробки SMS-повідомлень, щоб черга не перевищувала "
-						+ m + " повідомлень: " + (t + 0.01) + "хв");
+			if (n4er / (lambda * ((1 - p0) / p)) >= 5) {
+				System.out.println("Час обслуговування студентів має бути = " + (t - step) +
+						", щоб час чекання студентом підходу до нього викладача не перевищувала 5 хв");
 				return;
 			}
 		}
