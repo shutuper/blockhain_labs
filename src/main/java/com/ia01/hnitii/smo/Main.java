@@ -1,76 +1,34 @@
 package com.ia01.hnitii.smo;
 
-import java.util.Arrays;
-
-import static java.lang.Math.min;
-import static java.lang.Math.pow;
-
 public class Main {
 
 	public static void main(String[] args) {
-		int n = 4, m = 20, lambda = 15, t = 15;
-		// обрахунок 'u' приводимо до годин:
-		double u = 1D / (t / 60D), p = lambda / u;
-
-		System.out.println("\nОпераційні характеристики СМО із взаємодопомогою між каналами:\n");
-		double[] pT = smo_2_with_help(n, m, p);
-		System.out.printf("smo_2_with_help(n = %s, m = %s, p = %s) = \npT%s\n", n, m, p, Arrays.toString(pT));
-		printCharacteristics(n, m, lambda, u, pT);
-
-
-		System.out.println("\nОпераційні характеристики СМО без взаємодопомоги між каналами:\n");
-		pT = smo_2_without_help(n, m, p);
-		System.out.printf("smo_2_without_help(n = %s, m = %s, p = %s) = \npT%s\n", n, m, p, Arrays.toString(pT));
-		printCharacteristics(n, m, lambda, u, pT);
+		double lambda = 35, t = 1.6 / 60; // t in hours
+		printCharacteristics(lambda, t);
 	}
 
-	private static double[] smo_2_with_help(int n, int m, double p) {
-		double[] pT = new double[n + m + 1];
-		double a = p / n;
+	private static void printCharacteristics(double lambda, double t) {
+		double p = lambda * t, s2 = 0;
 
-		pT[0] = (1 - a) / (1 - pow(a, n + m + 1));
-		for (int k = 1; k <= n + m; k++) {
-			pT[k] = pow(a, k) * pT[0];
-		}
+		System.out.println("\nОпераційні характеристики СМО із довільним часом обслуговування:\n");
 
-		return pT;
-	}
+		double nc = p + p * p * (1 + s2) / (2 - 2 * p);
+		double n4 = nc - p;
 
-	private static double[] smo_2_without_help(int n, int m, double p) {
-		int len = n + m + 1;
-		double[] pT = new double[len];
-		double[] q = new double[len];
-		q[0] = 1;
+		System.out.printf("Середня кількість заявок у системі: %s\n", nc);
+		System.out.printf("Довжина черги: %s\n", n4);
+		System.out.printf("Середній час перебування заявки у системі (год.): %s\n", nc / lambda);
+		System.out.printf(" Середній час перебування заявки у черзі (год.): %s\n", n4 / lambda);
 
-		double s = 1;
-		for (int k = 1; k < len; k++) {
-			q[k] = q[k - 1] * p / min(k, n);
-			s += q[k];
-		}
+		System.out.println("\nОпераційні характеристики пуассонівської СМО:\n");
 
-		pT[0] = 1 / s;
-		for (int k = 1; k < len; k++) {
-			pT[k] = q[k] * pT[0];
-		}
+		nc = p / (1 - p);
+		n4 = p * p / (1 - p);
 
-		return pT;
-	}
-
-	private static void printCharacteristics(int n, int m, int lambda, double u, double[] pT) {
-		double p = pT[pT.length - 1];
-		double q = 1 - p;
-		double A = q * lambda;
-
-		double avgBusyN = 0;
-		for (int k = 0; k <= m; k++) {
-			avgBusyN += k * pT[n + k];
-		}
-
-		System.out.println("Імовірність відмови в обслуговуванні = " + p);
-		System.out.println("Відносна пропускна спроможность = " + q);
-		System.out.println("Абсолютна пропускна спроможность = " + A);
-		System.out.println("Середнє число зайнятих каналів = " + (lambda / u) * q);
-		System.out.println("Середня кількість заявок у черзі = " + avgBusyN / n);
+		System.out.printf("Середня кількість заявок у системі: %s\n", nc);
+		System.out.printf("Довжина черги: %s\n", n4);
+		System.out.printf("Середній час перебування заявки у системі (год.): %s\n", nc / lambda);
+		System.out.printf("Середній час перебування заявки у черзі (год.): %s\n", n4 / lambda);
 	}
 
 }
